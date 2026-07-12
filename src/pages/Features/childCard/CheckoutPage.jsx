@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../providers/AuthProvider';
 import { useCart } from '../../Features/context/CartContext';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { user } = useAuth(); // 🎯 2. Extract the logged-in user profile
 
   // Form State
   const [formData, setFormData] = useState({
@@ -41,9 +43,13 @@ const CheckoutPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          email: user?.email, // 🎯 3. Inject user email at root level so the database query finds it
           items: cartItems,
           totalAmount: grandTotal,
-          shippingDetails: formData,
+          shippingDetails: {
+            ...formData,
+            email: user?.email // 🎯 Optional backup: pairs it inside shipping metadata too
+          },
           paymentMethod: formData.paymentMethod,
           status: 'Processing',
           createdAt: new Date().toISOString()
@@ -78,10 +84,10 @@ const CheckoutPage = () => {
         </div>
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Order Placed!</h1>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/orders')} // 💡 Pro tip: navigate straight to history to review the card
           className="mt-8 w-full bg-[#00B058] hover:bg-[#008A45] text-white font-bold py-3 rounded-xl transition-all"
         >
-          Continue Shopping
+          View Your Orders
         </button>
       </div>
     );

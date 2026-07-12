@@ -13,8 +13,32 @@ const Navbar = () => {
   
   // Authentication and dropdown component states
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); // 🔑 State to track if the user is an admin
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+
+  // 🎯 1. DYNAMIC DELIVERY ADDRESS STATE (Pulls last saved or defaults to Gulshan 2)
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    localStorage.getItem('latestDeliveryAddress') || 'Gulshan 2, Dhaka'
+  );
+
+  // 🎯 2. EVENT LISTENER FOR LIVE ADMIN UPDATES
+  useEffect(() => {
+    const handleGlobalAddressChange = () => {
+      const updatedAddress = localStorage.getItem('latestDeliveryAddress');
+      if (updatedAddress) {
+        setDeliveryAddress(updatedAddress);
+      }
+    };
+
+    // Intercept custom event sent when an order is flagged as delivered
+    window.addEventListener('liveAddressUpdate', handleGlobalAddressChange);
+    
+    // Clean up event subscription on component unmount
+    return () => {
+      window.removeEventListener('liveAddressUpdate', handleGlobalAddressChange);
+    };
+  }, []);
 
   // Listen for changes to the active session in real-time
   useEffect(() => {
@@ -24,6 +48,20 @@ const Navbar = () => {
 
     return () => unsubscribe(); // Clean up subscription on unmount
   }, []);
+
+  // 📡 Fetch admin status from backend when the user logs in
+  useEffect(() => {
+    if (user?.email) {
+      fetch(`http://localhost:5000/api/users/admin/${user.email}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setIsAdmin(data.admin);
+        })
+        .catch((err) => console.error("Error verifying admin status:", err));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user?.email]);
 
   // Close dropdown if user clicks outside of it
   useEffect(() => {
@@ -65,13 +103,13 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* 🟢 2. DELIVERY ADDRESS BADGE */}
+        {/* 🟢 2. DELIVERY ADDRESS BADGE (Now dynamically listening to state!) */}
         <div className="hidden md:flex items-center gap-2 bg-[#F3F4F6] hover:bg-[#E5E7EB] transition-colors px-4 py-2 rounded-full text-sm font-semibold text-[#374151] max-w-[240px] truncate cursor-pointer">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6B7280] shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
           </svg>
-          <span className="truncate">Deliver to: <span className="text-[#111827] font-bold">Gulshan 2, Dhaka</span></span>
+          <span className="truncate">Deliver to: <span className="text-[#111827] font-bold">{deliveryAddress}</span></span>
         </div>
 
         {/* 🟢 3. CENTRALIZED SEARCH PILL INPUT */}
@@ -125,13 +163,24 @@ const Navbar = () => {
                     <p className="text-sm font-bold text-gray-800 truncate">{user.displayName || 'BazarShopper'}</p>
                   </div>
                   
-                  <Link 
-                    to="/orders" 
-                    onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#00B058] transition-all text-left w-full"
-                  >
-                    My Orders
-                  </Link>
+                  {/* 🛠️ MUTUALLY EXCLUSIVE LINKS: Admin gets Dashboard, User gets My Orders */}
+                  {isAdmin ? (
+                    <Link 
+                      to="/admin/dashboard" 
+                      onClick={() => setShowDropdown(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#00B058] bg-[#00B058]/5 hover:bg-[#00B058]/10 transition-all text-left w-full"
+                    >
+                      ⚙️ Admin Dashboard
+                    </Link>
+                  ) : (
+                    <Link 
+                      to="/orders" 
+                      onClick={() => setShowDropdown(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#00B058] transition-all text-left w-full"
+                    >
+                      My Orders
+                    </Link>
+                  )}
 
                   <button 
                     onClick={handleLogOut}

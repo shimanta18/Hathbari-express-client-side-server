@@ -63,7 +63,10 @@ const AdminDashboard = () => {
     }
   };
 
-  // 🟢 Update order status handler (Processing -> Delivered)
+  // Count active pending/processing orders
+  const pendingOrdersCount = orders.filter(o => o.status !== 'Delivered').length;
+
+  // 🟢 Update order status handler (Processing -> Delivered) with local broadcast
   const handleUpdateOrderStatus = (orderId, newStatus) => {
     fetch(`http://localhost:5000/api/admin/orders/${orderId}`, {
       method: 'PATCH',
@@ -72,6 +75,15 @@ const AdminDashboard = () => {
     })
     .then((res) => {
       if (res.ok) {
+        // 🎯 1. Find the order document we just updated inside our state array
+        const completedOrder = orders.find(o => (o._id === orderId || o.orderId === orderId));
+        
+        // 🎯 2. Extract the address and broadcast it globally across the window
+        if (completedOrder?.shippingDetails?.address) {
+          localStorage.setItem('latestDeliveryAddress', completedOrder.shippingDetails.address);
+          window.dispatchEvent(new Event('liveAddressUpdate')); // Triggers the Navbar listener
+        }
+
         fetchOrders(); // Live reload orders list to update UI
       } else {
         alert("Failed to update order status.");
@@ -79,9 +91,6 @@ const AdminDashboard = () => {
     })
     .catch((err) => console.error("Error updating order status:", err));
   };
-
-  // Count active pending/processing orders
-  const pendingOrdersCount = orders.filter(o => o.status !== 'Delivered').length;
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex">

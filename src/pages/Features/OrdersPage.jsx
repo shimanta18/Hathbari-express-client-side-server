@@ -1,23 +1,33 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TrackRiderButton from '../../pages/trakcer/TrackRiderButton';
+import { useAuth } from '../../providers/AuthProvider';
 
 const OrdersPage = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/orders')
+    if (authLoading) return;
+
+    if (!user?.email) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    fetch(`http://localhost:5000/api/orders?email=${user.email}`)
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Server responded with status ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
         return res.json();
       })
       .then((data) => {
-        setOrders(data);
+        // 🎯 Defensive Check: Handles direct arrays OR wrapped objects cleanly
+        const parsedOrders = Array.isArray(data) ? data : (data.orders || []);
+        setOrders(parsedOrders);
         setLoading(false);
       })
       .catch((err) => {
@@ -25,9 +35,9 @@ const OrdersPage = () => {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [user?.email, authLoading]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return <div className="text-center py-24 font-bold text-gray-400">Loading order history...</div>;
   }
 
@@ -46,11 +56,12 @@ const OrdersPage = () => {
       <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-8">Your orders</h1>
       
       {orders.length === 0 ? (
-        <div className="border border-gray-100 rounded-2xl p-12 bg-white text-center shadow-sm">
+        <div className="border border-gray-100 rounded-2xl p-8 bg-white text-center shadow-sm">
           <h3 className="font-bold text-gray-700 text-lg">No orders yet</h3>
+          
           <button 
             onClick={() => navigate('/')} 
-            className="mt-4 bg-[#00B058] hover:bg-[#008A45] text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all"
+            className="mt-6 bg-[#00B058] hover:bg-[#008A45] text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all"
           >
             Start shopping
           </button>
@@ -64,20 +75,12 @@ const OrdersPage = () => {
                   <span className="font-bold text-gray-700">ID: {order.orderId || order._id}</span>
                   <span className="text-[#00B058] font-black uppercase text-xs">● {order.status || 'Processing'}</span>
                 </div>
-                
-                {/* LOGIC: Only show button if NOT delivered */}
                 {order.status !== 'Delivered' ? (
-                  <TrackRiderButton 
-                    orderId={order.orderId || order._id} 
-                    className="px-4 py-2 text-xs" 
-                  />
+                  <TrackRiderButton orderId={order.orderId || order._id} className="px-4 py-2 text-xs" />
                 ) : (
-                  <span className="text-xs font-bold text-gray-400 uppercase italic">
-                    Delivered
-                  </span>
+                  <span className="text-xs font-bold text-gray-400 uppercase italic">Delivered</span>
                 )}
               </div>
-
               <div className="p-6 divide-y divide-gray-50">
                 {order.items?.map((item) => (
                   <div key={item._id} className="flex justify-between py-2 text-sm font-semibold">
@@ -85,7 +88,6 @@ const OrdersPage = () => {
                     <span className="text-gray-900">৳{(item.price * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
-                
                 <div className="pt-3 text-right font-black text-base text-gray-900">
                   Total: <span className="text-[#00B058]">৳{(order.totalAmount || order.total).toLocaleString()}</span>
                 </div>

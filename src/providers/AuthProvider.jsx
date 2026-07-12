@@ -23,13 +23,39 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Monitor auth state changes (keeps user logged in on refresh)
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+ useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    setUser(currentUser);
+    
+    // 🚀 IF a user is actively logged in, sync their details to MongoDB
+    if (currentUser) {
+      const userInfo = {
+        name: currentUser.displayName || "Anonymous User",
+        email: currentUser.email,
+        image: currentUser.photoURL || ""
+      };
+
+      try {
+        const response = await fetch('http://localhost:5000/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(userInfo)
+        });
+        
+        const data = await response.json();
+        console.log("📡 MongoDB Sync Status:", data.message);
+      } catch (error) {
+        console.error("❌ Failed to broadcast user payload to backend:", error);
+      }
+    }
+
+    setLoading(false);
+  });
+  
+  return () => unsubscribe();
+}, []);
 
   const authInfo = {
     user,
