@@ -174,7 +174,7 @@ const Navbar = () => {
                       onClick={() => setShowDropdown(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#00B058] bg-[#00B058]/5 hover:bg-[#00B058]/10 transition-all text-left w-full"
                     >
-                      ⚙️ Admin Dashboard
+                       Admin Dashboard
                     </Link>
                   ) : (
                     <Link 
