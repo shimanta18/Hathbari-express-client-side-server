@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useCart } from "../../Features/context/CartContext"; // 🎯 Wired up to your cart state provider
+import { useCart } from "../../pages/Features/context/CartContext";
 
-// 🎯 Environment-aware base URL: Bridges local development and live production channels seamlessly
+
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
   : 'http://localhost:5000';
@@ -10,7 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart(); // 🎯 Hook in the add-to-cart action dispatcher
+  const { addToCart } = useCart(); 
   
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
@@ -24,7 +24,7 @@ const ProductDetails = () => {
         setLoading(true);
         setError(null);
         
-        // 🚀 FIXED: Swapped out hardcoded localhost string for the dynamic environment config
+        
         const response = await fetch(`${API_BASE_URL}/api/products/${id}`);
         
         if (!response.ok) {
@@ -50,7 +50,7 @@ const ProductDetails = () => {
     if (type === 'inc') setQuantity(quantity + 1);
   };
 
-  // 🟢 CASE 1: SKELETON LOADER STATE
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center flex flex-col items-center justify-center">
@@ -60,7 +60,7 @@ const ProductDetails = () => {
     );
   }
 
-  // 🟢 CASE 2: NOT FOUND / DISCONNECTED EDGE STATE
+  
   if (error || !product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
@@ -76,7 +76,7 @@ const ProductDetails = () => {
     );
   }
 
-  // 🟢 CASE 3: ACTIVE PRODUCT DISPLAY SURFACE
+
   return (
     <div className="w-full bg-white min-h-screen text-left">
       {/* Top Action Nav Bar - "Back to shop" */}
