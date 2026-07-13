@@ -1,24 +1,31 @@
-import { useEffect, useState } from "react"; // 🚀 Added useEffect
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useCart } from "../../Features/context/CartContext"; // 🎯 Wired up to your cart state provider
+
+// 🎯 Environment-aware base URL: Bridges local development and live production channels seamlessly
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+  : 'http://localhost:5000';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [quantity, setQuantity] = useState(1);
+  const { addToCart } = useCart(); // 🎯 Hook in the add-to-cart action dispatcher
   
-  // 🚀 1. Set up states for loading, error, and database product data
+  const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🚀 2. Fetch the specific item from your Express server on mount/ID change
+  // Fetch product specific document from the Express/MongoDB layer on mount or ID shift
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`http://localhost:5000/api/products/${id}`);
+        // 🚀 FIXED: Swapped out hardcoded localhost string for the dynamic environment config
+        const response = await fetch(`${API_BASE_URL}/api/products/${id}`);
         
         if (!response.ok) {
           throw new Error("This grocery item could not be found in our inventory.");
@@ -43,7 +50,7 @@ const ProductDetails = () => {
     if (type === 'inc') setQuantity(quantity + 1);
   };
 
-  // 🚀 3. Show a clean loading spinner skeleton while waiting for MongoDB Atlas
+  // 🟢 CASE 1: SKELETON LOADER STATE
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center flex flex-col items-center justify-center">
@@ -53,7 +60,7 @@ const ProductDetails = () => {
     );
   }
 
-  // 🚀 4. Show the error state if the product doesn't exist or server is offline
+  // 🟢 CASE 2: NOT FOUND / DISCONNECTED EDGE STATE
   if (error || !product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
@@ -69,9 +76,9 @@ const ProductDetails = () => {
     );
   }
 
-  // 🚀 5. Render your beautiful layout using the live database object properties
+  // 🟢 CASE 3: ACTIVE PRODUCT DISPLAY SURFACE
   return (
-    <div className="w-full bg-white min-h-screen">
+    <div className="w-full bg-white min-h-screen text-left">
       {/* Top Action Nav Bar - "Back to shop" */}
       <div className="max-w-7xl mx-auto px-6 pt-6">
         <button 
@@ -88,7 +95,7 @@ const ProductDetails = () => {
       {/* Main Product Core Display Container */}
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         
-        {/* Left Aspect Side Column: Image Block Showcase */}
+        {/* Left Side: Image Showcase */}
         <div className="relative rounded-3xl overflow-hidden w-full aspect-[4/3] bg-[#F9FAFB] flex items-center justify-center">
           {product.discount && (
             <span className="absolute top-6 left-6 bg-[#FF1E46] text-white font-black text-xs tracking-wide uppercase px-2.5 py-1 rounded-md z-10">
@@ -102,21 +109,19 @@ const ProductDetails = () => {
           />
         </div>
 
-        {/* Right Aspect Side Column: Meta Info Formatting Description */}
-        <div className="flex flex-col text-left justify-start">
+        {/* Right Side: Product Metadata & Purchasing Controls */}
+        <div className="flex flex-col justify-start">
           
-          {/* Category Tag Header text */}
           <span className="text-xs font-bold text-[#9CA3AF] uppercase tracking-widest mb-1">
             {product.category}
           </span>
           
-          {/* Main Product Title Label */}
           <h1 className="text-4xl font-extrabold text-[#111827] tracking-tight leading-tight mb-3">
             {product.name}
           </h1>
 
-          {/* Rating, Quantity Weight, & Availability Status Badges Row */}
-          <div className="flex items-center gap-2 text-sm font-medium text-[#6B7280] mb-6">
+          {/* Rating, Weight & Status Metrics Row */}
+          <div className="flex items-center gap-2 text-sm font-medium text-[#6B7280] mb-6 text-left">
             <div className="flex items-center gap-1 font-extrabold text-[#111827]">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FBBF24" className="w-4 h-4">
                 <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
@@ -129,10 +134,8 @@ const ProductDetails = () => {
             <span className="text-[#00B058] font-bold">In stock</span>
           </div>
 
-          {/* Short Functional Description Paragraph text */}
           <p className="text-[#6B7280] text-sm leading-relaxed mb-8 max-w-lg">
-            {/* Fallback to custom description if you add it to database later, otherwise showing standard */}
-            {product.description || `Fresh organic ${product.name.toLowerCase()}, safely packed and locally sourced from local neighborhood markets.`}
+            {product.description || `Fresh organic ${product.name?.toLowerCase()}, safely packed and locally sourced from local neighborhood markets.`}
           </p>
 
           {/* Large Interactive Pricing Section */}
@@ -147,10 +150,10 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* Operational Ordering Blocks Box Row */}
+          {/* Quantity Controls & Dynamic Context Push Trigger */}
           <div className="flex items-center gap-4 w-full max-w-md">
             
-            {/* Quantity Step Controls Counter Segment */}
+            {/* Quantity Stepper Component */}
             <div className="flex items-center justify-between border border-[#E5E7EB] bg-white rounded-xl py-2 px-3 w-32 shadow-sm">
               <button 
                 onClick={() => handleQuantityChange('dec')}
@@ -169,9 +172,12 @@ const ProductDetails = () => {
               </button>
             </div>
 
-            {/* Main Green Action Add To Cart CTA Button */}
+            {/* Core Action Button: Direct Integration with Context Provider Dispatcher */}
             <button 
-              onClick={() => alert(`Added ${quantity} x ${product.name} to your basket.`)}
+              onClick={() => {
+                addToCart(product, quantity); // 🚀 Directly appends data to global state tree
+                // Optional: You could use a sleek toast notification framework here instead of a crude alert alert
+              }}
               className="flex-grow bg-[#00B058] hover:bg-[#008A45] active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm text-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
