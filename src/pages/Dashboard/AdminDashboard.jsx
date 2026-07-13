@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -9,7 +9,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Read initialization directly from storage
+  // Read initialization directly from storage safely
   const [liveAddress, setLiveAddress] = useState(() => 
     localStorage.getItem('latestDeliveryAddress') || ''
   );
@@ -23,7 +23,20 @@ export default function AdminDashboard() {
     image: '',
   });
 
-  // Automatically keeps tabs synced if changed elsewhere in the browser
+  // Centralized address updater that syncs local state, local storage, and custom components
+  const updateLiveAddress = useCallback((newAddress) => {
+    const fallbackAddress = newAddress || 'No recent delivery address found.';
+    localStorage.setItem('latestDeliveryAddress', fallbackAddress);
+    setLiveAddress(fallbackAddress);
+
+    window.dispatchEvent(
+      new CustomEvent('liveAddressUpdate', {
+        detail: { address: fallbackAddress }
+      })
+    );
+  }, []);
+
+  // Keeps tabs synced if changed anywhere else in the browser context
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'latestDeliveryAddress') {
@@ -31,8 +44,19 @@ export default function AdminDashboard() {
       }
     };
 
+    const handleCustomEventChange = (e) => {
+      if (e.detail?.address) {
+        setLiveAddress(e.detail.address);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('liveAddressUpdate', handleCustomEventChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('liveAddressUpdate', handleCustomEventChange);
+    };
   }, []);
 
   // Fetch data dynamically based on active tab focus
@@ -116,9 +140,8 @@ export default function AdminDashboard() {
       const targetOrder = orders.find(order => (order._id || order.id) === orderId);
       const deliveryAddressValue = targetOrder?.shippingAddress || targetOrder?.shippingDetails?.address || 'Dhaka, Bangladesh';
 
-      // Save to localStorage and update state directly
-      localStorage.setItem('latestDeliveryAddress', deliveryAddressValue);
-      setLiveAddress(deliveryAddressValue);
+      // Unified broadcast update
+      updateLiveAddress(deliveryAddressValue);
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
@@ -130,10 +153,9 @@ export default function AdminDashboard() {
     }
   };
 
-  // Direct manual sync hook reads current actual localStorage state
   const triggerAddressSync = () => {
     const currentStorageAddress = localStorage.getItem('latestDeliveryAddress');
-    setLiveAddress(currentStorageAddress || 'No recent delivery address found.');
+    updateLiveAddress(currentStorageAddress);
   };
 
   return (
