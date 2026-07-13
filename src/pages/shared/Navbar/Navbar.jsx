@@ -27,16 +27,37 @@ const Navbar = () => {
     localStorage.getItem('latestDeliveryAddress') || 'Gulshan 2, Dhaka'
   );
 
-  // EVENT LISTENER FOR LIVE ADMIN UPDATES
+  // 🔄 EFFECT 1: FETCH LATEST DELIVERED ADDRESS FROM DATABASE ON AUTH
   useEffect(() => {
-    const handleGlobalAddressChange = () => {
-      const updatedAddress = localStorage.getItem('latestDeliveryAddress');
+    if (user?.email) {
+      fetch(`${API_BASE_URL}/api/orders/latest-delivered-address/${user.email}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to retrieve shipping history data');
+          return res.json();
+        })
+        .then((data) => {
+          if (data && data.address) {
+            setDeliveryAddress(data.address);
+            localStorage.setItem('latestDeliveryAddress', data.address);
+          }
+        })
+        .catch((err) => console.error("❌ Error fetching latest delivered address:", err));
+    } else {
+      // Fallback fallback to local storage default if user logs out
+      setDeliveryAddress(localStorage.getItem('latestDeliveryAddress') || 'Gulshan 2, Dhaka');
+    }
+  }, [user?.email]);
+
+  // 📡 EFFECT 2: INTERCEPT LIVE STATUS TRANSITIONS (e.g., updates when an order is flagged as delivered)
+  useEffect(() => {
+    const handleGlobalAddressChange = (event) => {
+      // Checks for custom event detail payload first, falls back to storage sync
+      const updatedAddress = event.detail?.address || localStorage.getItem('latestDeliveryAddress');
       if (updatedAddress) {
         setDeliveryAddress(updatedAddress);
       }
     };
 
-    // Intercept custom event sent when an order is flagged as delivered
     window.addEventListener('liveAddressUpdate', handleGlobalAddressChange);
     
     // Clean up event subscription on component unmount
