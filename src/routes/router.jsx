@@ -13,6 +13,11 @@ import Home from "../pages/Main home/Home";
 import ProductDetails from "../pages/ProductDetails/ProductDetails";
 import TrackOrder from "../pages/trakcer/TrackOrder";
 
+
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+  : 'http://localhost:5000';
+
 export const router = createBrowserRouter([
   { 
     path: "/",
@@ -49,11 +54,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'orders',
-        // 🚀 NEW: React Router handles fetching the orders before rendering the component
+        
         loader: async () => {
-          const response = await fetch('http://localhost:5000/api/orders');
+          const response = await fetch(`${API_BASE_URL}/api/orders`);
           if (!response.ok) {
-            // Returns an empty array if backend isn't up yet, preventing frontend crashes
+            
             return []; 
           }
           return response.json();
