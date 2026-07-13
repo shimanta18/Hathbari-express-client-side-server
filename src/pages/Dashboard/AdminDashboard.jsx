@@ -9,6 +9,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Read initialization directly from storage
+  const [liveAddress, setLiveAddress] = useState(() => 
+    localStorage.getItem('latestDeliveryAddress') || ''
+  );
+
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -17,6 +22,18 @@ export default function AdminDashboard() {
     description: '',
     image: '',
   });
+
+  // Automatically keeps tabs synced if changed elsewhere in the browser
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'latestDeliveryAddress') {
+        setLiveAddress(e.newValue || 'No recent delivery address found.');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Fetch data dynamically based on active tab focus
   useEffect(() => {
@@ -54,7 +71,6 @@ export default function AdminDashboard() {
     e.preventDefault();
     setError(null);
 
-    // Form Data Type Casting to prevent MongoDB validation crashes
     const payload = {
       ...formData,
       price: Number(formData.price),
@@ -86,7 +102,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // PATCH status update pipeline
   const handleMarkAsDelivered = async (orderId) => {
     setError(null);
     try {
@@ -98,7 +113,13 @@ export default function AdminDashboard() {
 
       if (!res.ok) throw new Error('Failed to update status on the server');
 
-      // Update local state smoothly to update UI reactively
+      const targetOrder = orders.find(order => (order._id || order.id) === orderId);
+      const deliveryAddressValue = targetOrder?.shippingAddress || targetOrder?.shippingDetails?.address || 'Dhaka, Bangladesh';
+
+      // Save to localStorage and update state directly
+      localStorage.setItem('latestDeliveryAddress', deliveryAddressValue);
+      setLiveAddress(deliveryAddressValue);
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           (order._id || order.id) === orderId ? { ...order, status: 'Delivered' } : order
@@ -109,8 +130,10 @@ export default function AdminDashboard() {
     }
   };
 
+  // Direct manual sync hook reads current actual localStorage state
   const triggerAddressSync = () => {
-    window.dispatchEvent(new Event('liveAddressUpdate'));
+    const currentStorageAddress = localStorage.getItem('latestDeliveryAddress');
+    setLiveAddress(currentStorageAddress || 'No recent delivery address found.');
   };
 
   return (
@@ -118,7 +141,7 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto">
         
         {/* Top Control Bar */}
-        <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-5">
+        <div className="flex justify-between items-center mb-4 border-b border-gray-200 pb-5">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Admin Control Panel</h1>
           <button 
             onClick={triggerAddressSync}
@@ -127,6 +150,17 @@ export default function AdminDashboard() {
             Sync Live Address Feed
           </button>
         </div>
+
+        {/* Real-time Synced Address Feed Display Box */}
+        {liveAddress && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6 flex items-center justify-between shadow-xs transition-all">
+            <div>
+              <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Latest Delivered Destination Feed</span>
+              <span className="text-sm font-semibold text-emerald-900">{liveAddress}</span>
+            </div>
+            <span className="badge badge-success text-white font-bold text-xs uppercase px-2 py-1">Live Connected</span>
+          </div>
+        )}
 
         {/* Tab Switchers */}
         <div className="tabs tabs-boxed mb-6 bg-white p-2 shadow-sm inline-flex border border-gray-100">
@@ -313,11 +347,13 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Buyer Profile</span>
-                        <span className="text-sm font-semibold text-gray-880">{order.customerName || 'Guest checkout'}</span>
+                        <span className="text-sm font-semibold text-gray-800">{order.customerName || 'Guest checkout'}</span>
                       </div>
                       <div>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Routing Node</span>
-                        <span className="text-sm text-gray-600 font-medium">{order.shippingAddress || 'Digital Product'}</span>
+                        <span className="text-sm text-gray-600 font-medium">
+                          {order.shippingAddress || order.shippingDetails?.address || 'Digital Product'}
+                        </span>
                       </div>
                       
                       {/* Dynamic Order Action Node */}

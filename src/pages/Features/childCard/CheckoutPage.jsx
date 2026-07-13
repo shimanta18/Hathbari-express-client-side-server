@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useCart } from '../../Features/context/CartContext';
 
-
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
   : 'http://localhost:5000';
@@ -24,7 +23,6 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
 
-
   const deliveryFee = cartItems.length > 0 ? 60 : 0;
   const grandTotal = cartTotal + deliveryFee;
 
@@ -34,13 +32,12 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async (e) => {
-    e.preventDefault(); // Prevents page reload
+    e.preventDefault(); 
     if (cartItems.length === 0) return;
 
     setIsSubmitting(true);
 
     try {
-      // 🚀 FIXED: Swapped out hardcoded localhost to target the dynamic environment configuration
       const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
@@ -50,6 +47,12 @@ const CheckoutPage = () => {
           email: user?.email, 
           items: cartItems,
           totalAmount: grandTotal,
+          
+          // 🟢 FIXED: Flat keys mapped explicitly to match AdminDashboard requirements
+          customerName: formData.name,
+          shippingAddress: formData.address,
+          
+          // Retained for backend object-nesting backwards compatibility
           shippingDetails: {
             ...formData,
             email: user?.email 
@@ -65,10 +68,10 @@ const CheckoutPage = () => {
       }
 
       const data = await response.json();
-      console.log("Order saved:", data);
+      console.log("Order saved successfully:", data);
       
       setIsOrderSuccess(true);
-      clearCart(); // Clear cart after success
+      clearCart(); 
     } catch (error) {
       console.error("Order processing failed:", error);
       alert("Failed to place order. Check your console for details.");
@@ -77,7 +80,6 @@ const CheckoutPage = () => {
     }
   };
 
-  
   if (isOrderSuccess) {
     return (
       <div className="max-w-md mx-auto text-center py-20 px-4">
@@ -97,7 +99,6 @@ const CheckoutPage = () => {
     );
   }
 
-  
   if (cartItems.length === 0) {
     return (
       <div className="max-w-7xl mx-auto text-center py-24 px-4">
@@ -109,45 +110,71 @@ const CheckoutPage = () => {
     );
   }
 
-  // : CHECKOUT INTERFACE
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 text-left">
       <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-8">Checkout</h1>
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT: FORM */}
+        {/* LEFT: FORM INPUTS */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-extrabold text-gray-900 border-b border-gray-50 pb-2">Delivery Details</h2>
             
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Recipient Name</label>
-              <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" />
+              <input 
+                type="text" 
+                name="name" 
+                required 
+                value={formData.name} 
+                onChange={handleInputChange} 
+                className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" 
+              />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Mobile Phone</label>
-              <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" />
+              <input 
+                type="tel" 
+                name="phone" 
+                required 
+                value={formData.phone} 
+                onChange={handleInputChange} 
+                className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" 
+              />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Address</label>
-              <textarea name="address" required rows={3} value={formData.address} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none resize-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" />
+              <textarea 
+                name="address" 
+                required 
+                rows={3} 
+                value={formData.address} 
+                onChange={handleInputChange} 
+                className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none resize-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" 
+              />
             </div>
           </div>
         </div>
 
-        {/* RIGHT: SUMMARY */}
+        {/* RIGHT: ORDER SUMMARY PERSISTENT PANEL */}
         <div className="lg:col-span-5 lg:sticky lg:top-24">
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
             <h2 className="text-lg font-extrabold text-gray-900 mb-4">Order Summary</h2>
             
-            {/* Total Section */}
             <div className="border-t border-gray-100 pt-4 space-y-3">
-              <div className="flex justify-between font-medium text-gray-500"><span>Subtotal</span><span>৳{cartTotal.toLocaleString()}</span></div>
-              <div className="flex justify-between font-medium text-gray-500"><span>Delivery</span><span>৳{deliveryFee}</span></div>
+              <div className="flex justify-between font-medium text-gray-500">
+                <span>Subtotal</span>
+                <span>৳{cartTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between font-medium text-gray-500">
+                <span>Delivery</span>
+                <span>৳{deliveryFee}</span>
+              </div>
               <div className="flex justify-between text-lg font-black text-[#00B058]">
-                <span>Total</span><span>৳{grandTotal.toLocaleString()}</span>
+                <span>Total</span>
+                <span>৳{grandTotal.toLocaleString()}</span>
               </div>
             </div>
 

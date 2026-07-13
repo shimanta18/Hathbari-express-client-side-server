@@ -22,47 +22,62 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // 🎯 DYNAMIC DELIVERY ADDRESS STATE (Pulls last saved or defaults to Gulshan 2)
+  // 🎯 DYNAMIC DELIVERY ADDRESS STATE (Unified key string to handle typo resolution)
   const [deliveryAddress, setDeliveryAddress] = useState(
-    localStorage.getItem('latestDeliveryAddress') || 'Gulshan 2, Dhaka'
+    localStorage.getItem('latestDeliveryAddress') || 'No recent deliveries'
   );
 
   // 🔄 EFFECT 1: FETCH LATEST DELIVERED ADDRESS FROM DATABASE ON AUTH
   useEffect(() => {
-    if (user?.email) {
-      fetch(`${API_BASE_URL}/api/orders/latest-delivered-address/${user.email}`)
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed to retrieve shipping history data');
-          return res.json();
-        })
-        .then((data) => {
-          if (data && data.address) {
-            setDeliveryAddress(data.address);
-            localStorage.setItem('latestDeliveryAddress', data.address);
-          }
-        })
-        .catch((err) => console.error("❌ Error fetching latest delivered address:", err));
-    } else {
-      // Fallback fallback to local storage default if user logs out
-      setDeliveryAddress(localStorage.getItem('latestDeliveryAddress') || 'Gulshan 2, Dhaka');
-    }
-  }, [user?.email]);
-
-  // 📡 EFFECT 2: INTERCEPT LIVE STATUS TRANSITIONS (e.g., updates when an order is flagged as delivered)
+  // Only fetch shipping history if the user is logged in AND is a regular customer (NOT an admin)
+  if (user?.email && !isAdmin) {
+    fetch(`${API_BASE_URL}/api/orders/latest-delivered-address/${user.email}`)
+      .then((res) => {
+        // 🟢 If the account has no order history (404), use the last saved local storage address or a neutral text
+        if (res.status === 404) {
+          return { address: localStorage.getItem('latestDeliveryAddress') || 'No recent deliveries' };
+        }
+        if (!res.ok) throw new Error('Failed to retrieve shipping history data');
+        return res.json();
+      })
+      .then((data) => {
+        if (data && data.address) {
+          setDeliveryAddress(data.address);
+          localStorage.setItem('latestDeliveryAddress', data.address);
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Error fetching latest delivered address:", err);
+        setDeliveryAddress(localStorage.getItem('latestDeliveryAddress') || 'No recent deliveries');
+      });
+  } else if (isAdmin) {
+    // 🟢 For the Admin Control Panel view, read directly from the live feed storage without customer defaults
+    setDeliveryAddress(localStorage.getItem('latestDeliveryAddress') || 'No recent deliveries');
+  }
+}, [user?.email, isAdmin]);
+  // 📡 EFFECT 2: INTERCEPT IN-TAB CUSTOM EVENTS & CROSS-TAB STORAGE TRANSITIONS
   useEffect(() => {
+    // Fired if the event occurs within the exact same browser window tab
     const handleGlobalAddressChange = (event) => {
-      // Checks for custom event detail payload first, falls back to storage sync
       const updatedAddress = event.detail?.address || localStorage.getItem('latestDeliveryAddress');
       if (updatedAddress) {
         setDeliveryAddress(updatedAddress);
       }
     };
 
+    // Fired automatically by the browser when localStorage changes in a different tab
+    const handleCrossTabStorageChange = (event) => {
+      if ((event.key === 'latestDeliveryAddress' || event.key === 'latestDelivaryAddress') && event.newValue) {
+        setDeliveryAddress(event.newValue);
+      }
+    };
+
     window.addEventListener('liveAddressUpdate', handleGlobalAddressChange);
+    window.addEventListener('storage', handleCrossTabStorageChange);
     
-    // Clean up event subscription on component unmount
     return () => {
       window.removeEventListener('liveAddressUpdate', handleGlobalAddressChange);
+      window.removeEventListener('storage', handleCrossTabStorageChange);
     };
   }, []);
 
@@ -205,7 +220,8 @@ const Navbar = () => {
                     >
                       My Orders
                     </Link>
-                  )}
+                  )
+                  }
 
                   <button 
                     onClick={handleLogOut}
