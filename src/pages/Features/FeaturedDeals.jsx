@@ -1,19 +1,26 @@
-import { useEffect, useState } from "react"; // 🚀 1. Import hooks
+import { useEffect, useState } from "react";
 import { Link } from 'react-router-dom';
 import DealCard from './DealCard';
+
+
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+  : 'http://localhost:5000';
+
 const FeaturedDeals = () => {
-  // 🚀 2. Establish dynamic state handlers
+
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🚀 3. Fetch on-sale items from your backend on component mount
+  // Fetch on-sale items from your backend on component mount
   useEffect(() => {
     const fetchFeaturedDeals = async () => {
       try {
         setLoading(true);
-        // Using the ?onSale=true query filter we configured in server.js
-        const response = await fetch('http://localhost:5000/api/products?onSale=true');
+        
+     
+        const response = await fetch(`${API_BASE_URL}/api/products?onSale=true`);
         
         if (!response.ok) {
           throw new Error('Could not retrieve active deals.');
@@ -21,7 +28,7 @@ const FeaturedDeals = () => {
         
         const data = await response.json();
         
-        // Optional: Slice the array to show a maximum of 4 items (1 clean row)
+       
         setDeals(data.slice(0, 4));
       } catch (err) {
         setError(err.message);
@@ -33,7 +40,7 @@ const FeaturedDeals = () => {
     fetchFeaturedDeals();
   }, []);
 
-  // 🚀 4. Quietly hide the section or show a subtle skeleton state while loading
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 text-center text-gray-400 text-sm animate-pulse">
@@ -42,7 +49,7 @@ const FeaturedDeals = () => {
     );
   }
 
-  // If there's an error or no active deals exist in MongoDB, skip rendering this section entirely
+  
   if (error || deals.length === 0) return null;
 
   return (
@@ -55,16 +62,16 @@ const FeaturedDeals = () => {
         </h2>
 
          <Link 
-                    to="/shop" 
-                    className="text-[#00B058] font-semibold text-sm hover:underline cursor-pointer transition-all"
-                  >See all</Link>
+            to="/shop" 
+            className="text-[#00B058] font-semibold text-sm hover:underline cursor-pointer transition-all"
+          >See all</Link>
                   
       </div>
 
       {/* Fully Configured Responsive Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {deals.map((deal) => (
-          // 🚀 5. Crucial: Changed deal.id to deal._id to match MongoDB's key formatting
+         
           <DealCard key={deal._id} item={deal} />
         ))}
       </div>

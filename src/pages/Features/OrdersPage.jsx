@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TrackRiderButton from '../../pages/trakcer/TrackRiderButton';
 import { useAuth } from '../../providers/AuthProvider';
 
-// 🎯 Automatically adapts to production or local development environments
+
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
   : 'http://localhost:5000';
@@ -24,14 +24,13 @@ const OrdersPage = () => {
       return;
     }
 
-    // 🎯 Swapped the hardcoded string out for your dynamic environment variable
+
     fetch(`${API_BASE_URL}/api/orders?email=${user.email}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
         return res.json();
       })
       .then((data) => {
-        // Defensive Check: Handles direct arrays OR wrapped objects cleanly
         const parsedOrders = Array.isArray(data) ? data : (data.orders || []);
         setOrders(parsedOrders);
         setLoading(false);

@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../../pages/Features/context/CartContext'; // 🚀 1. Hook up your cart context (Adjust path if needed)
+import { useCart } from '../../pages/Features/context/CartContext';
+
+
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+  : 'http://localhost:5000';
 
 const ShopPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // 🚀 2. Destructure the global addToCart action
   const { addToCart } = useCart();
-  
-  // Active App Filter States
+
+
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('best-sellers');
@@ -17,7 +21,7 @@ const ShopPage = () => {
 
   const categoriesList = ['All', 'Fruits', 'Vegetables', 'Drinks', 'Snacks', 'Meat', 'Dairy'];
 
-  // 📡 Dynamic Side-Effect Hook Syncing UI State with Cloud Cluster Data
+ 
   useEffect(() => {
     setLoading(true);
     const queryParams = new URLSearchParams({
@@ -27,7 +31,8 @@ const ShopPage = () => {
       onSale: onSaleOnly
     });
 
-    fetch(`http://localhost:5000/api/products?${queryParams}`)
+    
+    fetch(`${API_BASE_URL}/api/products?${queryParams}`)
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
@@ -189,11 +194,10 @@ const ShopPage = () => {
                       )}
                     </div>
                     
-                    {/* 🚀 3. UPDATED BUTTON: Runs the operational business logic now */}
                     <button 
                       onClick={(e) => {
-                        e.preventDefault(); // Prevents clicking the button from following the <Link> parent route
-                        addToCart(item);     // 🎯 Feeds product parameters straight into context state
+                        e.preventDefault(); 
+                        addToCart(item);     
                       }}
                       className="w-8 h-8 rounded-full bg-[#00B058] hover:bg-[#008A45] text-white flex items-center justify-center font-bold shadow-sm cursor-pointer transition-all active:scale-95"
                     >

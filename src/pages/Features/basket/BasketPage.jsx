@@ -26,7 +26,7 @@ const BasketPage = () => {
         Your Basket
       </h1>
 
-      {/* Two-Column Responsive Grid Layout (Matches image_846582.png structural footprint) */}
+      {/* Two-Column Responsive Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
         {/* Left Hand: Shopping Basket Selected Product Cards List container */}
@@ -43,10 +43,10 @@ const BasketPage = () => {
                 className="w-20 h-20 rounded-xl object-cover shrink-0"
               />
 
-              {/* Product Content Specifications Block layout */}
-              <div className="flex-1 text-left flex flex-col justify-between h-20 py-0.5">
+             
+              <div className="flex-1 text-left flex flex-col justify-between h-20 py-0.5 pr-16">
                 <div>
-                  <h3 className="font-extrabold text-base text-[#111827] leading-tight">
+                  <h3 className="font-extrabold text-base text-[#111827] leading-tight line-clamp-1">
                     {item.name}
                   </h3>
                   <p className="text-xs font-bold text-gray-400 mt-0.5">
@@ -56,18 +56,19 @@ const BasketPage = () => {
 
                 {/* Counter Control Modifier Selector Box Pill */}
                 <div className="flex items-center gap-3 border border-[#E5E7EB] rounded-full w-fit px-3 py-1 bg-[#F9FAFB]">
+                  
                   <button 
-                    onClick={() => updateQuantity(item._id, -1)}
-                    className="text-gray-400 hover:text-black font-extrabold text-sm px-1 cursor-pointer"
+                    onClick={() => item.quantity > 1 ? updateQuantity(item._id, -1) : removeFromCart(item._id)}
+                    className="text-gray-400 hover:text-red-500 font-extrabold text-sm px-1 cursor-pointer transition-colors"
                   >
                     —
                   </button>
-                  <span className="text-sm font-black text-[#111827] w-4 text-center">
+                  <span className="text-sm font-black text-[#111827] w-4 text-center select-none">
                     {item.quantity}
                   </span>
                   <button 
                     onClick={() => updateQuantity(item._id, 1)}
-                    className="text-gray-400 hover:text-[#00B058] font-extrabold text-sm px-1 cursor-pointer"
+                    className="text-gray-400 hover:text-[#00B058] font-extrabold text-sm px-1 cursor-pointer transition-colors"
                   >
                     +
                   </button>
@@ -103,7 +104,7 @@ const BasketPage = () => {
           </button>
         </div>
 
-        {/* Right Hand: Sticky Order Summary Card Box (Matches image_846582.png exactly) */}
+        {/* Right Hand: Sticky Order Summary Card Box */}
         <div className="bg-white border border-[#E5E7EB] rounded-[24px] p-6 shadow-sm sticky top-24 text-left">
           <h2 className="text-lg font-black text-[#111827] mb-6">
             Order Summary

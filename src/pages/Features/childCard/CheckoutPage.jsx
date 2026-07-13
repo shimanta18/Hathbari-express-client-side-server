@@ -3,12 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useCart } from '../../Features/context/CartContext';
 
+
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+  : 'http://localhost:5000';
+
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearCart } = useCart();
-  const { user } = useAuth(); // 🎯 2. Extract the logged-in user profile
-
-  // Form State
+  const { user } = useAuth(); 
+ 
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -20,7 +24,7 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
 
-  // Fee Calculations
+
   const deliveryFee = cartItems.length > 0 ? 60 : 0;
   const grandTotal = cartTotal + deliveryFee;
 
@@ -36,19 +40,19 @@ const CheckoutPage = () => {
     setIsSubmitting(true);
 
     try {
-      // 📡 Send the order to your Express Backend
-      const response = await fetch('http://localhost:5000/api/orders', {
+      // 🚀 FIXED: Swapped out hardcoded localhost to target the dynamic environment configuration
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: user?.email, // 🎯 3. Inject user email at root level so the database query finds it
+          email: user?.email, 
           items: cartItems,
           totalAmount: grandTotal,
           shippingDetails: {
             ...formData,
-            email: user?.email // 🎯 Optional backup: pairs it inside shipping metadata too
+            email: user?.email 
           },
           paymentMethod: formData.paymentMethod,
           status: 'Processing',
@@ -73,7 +77,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // 🟢 CASE 1: SUCCESS VIEW
+  
   if (isOrderSuccess) {
     return (
       <div className="max-w-md mx-auto text-center py-20 px-4">
@@ -84,8 +88,8 @@ const CheckoutPage = () => {
         </div>
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Order Placed!</h1>
         <button
-          onClick={() => navigate('/orders')} // 💡 Pro tip: navigate straight to history to review the card
-          className="mt-8 w-full bg-[#00B058] hover:bg-[#008A45] text-white font-bold py-3 rounded-xl transition-all"
+          onClick={() => navigate('/orders')} 
+          className="mt-8 w-full bg-[#00B058] hover:bg-[#008A45] text-white font-bold py-3 rounded-xl transition-all cursor-pointer"
         >
           View Your Orders
         </button>
@@ -93,7 +97,7 @@ const CheckoutPage = () => {
     );
   }
 
-  // 🟢 CASE 2: EMPTY BASKET VIEW
+  
   if (cartItems.length === 0) {
     return (
       <div className="max-w-7xl mx-auto text-center py-24 px-4">
@@ -105,7 +109,7 @@ const CheckoutPage = () => {
     );
   }
 
-  // 🟢 CASE 3: CHECKOUT INTERFACE
+  // : CHECKOUT INTERFACE
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 text-left">
       <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-8">Checkout</h1>
@@ -118,17 +122,17 @@ const CheckoutPage = () => {
             
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Recipient Name</label>
-              <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none" />
+              <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Mobile Phone</label>
-              <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none" />
+              <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Address</label>
-              <textarea name="address" required rows={3} value={formData.address} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none resize-none" />
+              <textarea name="address" required rows={3} value={formData.address} onChange={handleInputChange} className="w-full bg-[#F3F4F6] p-3 rounded-xl outline-none resize-none border border-transparent focus:bg-white focus:border-[#00B058] transition-all" />
             </div>
           </div>
         </div>
@@ -140,8 +144,8 @@ const CheckoutPage = () => {
             
             {/* Total Section */}
             <div className="border-t border-gray-100 pt-4 space-y-3">
-              <div className="flex justify-between"><span>Subtotal</span><span>৳{cartTotal.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span>Delivery</span><span>৳{deliveryFee}</span></div>
+              <div className="flex justify-between font-medium text-gray-500"><span>Subtotal</span><span>৳{cartTotal.toLocaleString()}</span></div>
+              <div className="flex justify-between font-medium text-gray-500"><span>Delivery</span><span>৳{deliveryFee}</span></div>
               <div className="flex justify-between text-lg font-black text-[#00B058]">
                 <span>Total</span><span>৳{grandTotal.toLocaleString()}</span>
               </div>
@@ -150,8 +154,8 @@ const CheckoutPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full mt-6 text-white font-extrabold py-3.5 rounded-xl ${
-                isSubmitting ? 'bg-gray-400' : 'bg-[#00B058] hover:bg-[#008A45]'
+              className={`w-full mt-6 text-white font-extrabold py-3.5 rounded-xl shadow-md transition-all active:scale-[0.99] cursor-pointer ${
+                isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#00B058] hover:bg-[#008A45]'
               }`}
             >
               {isSubmitting ? 'Processing...' : 'Place Order'}
