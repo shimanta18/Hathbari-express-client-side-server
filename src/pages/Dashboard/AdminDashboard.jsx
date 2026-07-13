@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-//  Dynamic Environment Base URL Setup
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function AdminDashboard() {
@@ -111,13 +111,13 @@ export default function AdminDashboard() {
         {/* Tab Switchers */}
         <div className="tabs tabs-boxed mb-6 bg-white p-2 shadow-sm inline-flex border border-gray-100">
           <button
-            className={`tab tab-lg font-medium transition-all ${activeTab === 'inventory' ? 'tab-active bg-primary text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`tab tab-lg font-medium transition-all ${activeTab === 'inventory' ? 'tab-active bg-green-600 text-white' : 'text-gray-600 hover:text-gray-900'}`}
             onClick={() => setActiveTab('inventory')}
           >
             Inventory Management
           </button>
           <button
-            className={`tab tab-lg font-medium transition-all ${activeTab === 'orders' ? 'tab-active bg-primary text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`tab tab-lg font-medium transition-all ${activeTab === 'orders' ? 'tab-active bg-green-600 text-white' : 'text-gray-600 hover:text-gray-900'}`}
             onClick={() => setActiveTab('orders')}
           >
             Order Feeds
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
                   ></textarea>
                 </div>
 
-                <button type="submit" className="btn btn-primary w-full text-white mt-2">
+                <button type="submit" className="btn  bg-green-600 w-full text-white mt-2">
                   Push to Live Catalog
                 </button>
               </form>
