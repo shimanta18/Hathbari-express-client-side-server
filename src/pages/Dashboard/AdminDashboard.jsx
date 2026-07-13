@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function AdminDashboard() {
@@ -55,7 +54,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     setError(null);
 
-    //  Form Data Type Casting to prevent MongoDB validation crashes
+    // Form Data Type Casting to prevent MongoDB validation crashes
     const payload = {
       ...formData,
       price: Number(formData.price),
@@ -74,7 +73,6 @@ export default function AdminDashboard() {
       const newProduct = await res.json();
       setProducts((prev) => [newProduct, ...prev]);
       
-     
       setFormData({
         name: '',
         price: '',
@@ -88,7 +86,29 @@ export default function AdminDashboard() {
     }
   };
 
-  
+  // PATCH status update pipeline
+  const handleMarkAsDelivered = async (orderId) => {
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Delivered' }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update status on the server');
+
+      // Update local state smoothly to update UI reactively
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          (order._id || order.id) === orderId ? { ...order, status: 'Delivered' } : order
+        )
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const triggerAddressSync = () => {
     window.dispatchEvent(new Event('liveAddressUpdate'));
   };
@@ -130,7 +150,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Dynamic Panels */}
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -217,7 +236,7 @@ export default function AdminDashboard() {
                   ></textarea>
                 </div>
 
-                <button type="submit" className="btn  bg-green-600 w-full text-white mt-2">
+                <button type="submit" className="btn bg-green-600 w-full text-white mt-2">
                   Push to Live Catalog
                 </button>
               </form>
@@ -278,9 +297,8 @@ export default function AdminDashboard() {
             </div>
           </div>
         ) : (
-          
-          /* Order Feed Card Panel */
           <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-6">
+            {/* Order Feed Card Panel */}
             <h2 className="text-xl font-bold text-gray-800 mb-6">Real-Time Order Streams ({orders.length})</h2>
             {orders.length === 0 ? (
               <div className="text-center py-20 text-gray-400 font-medium">Waiting for incoming checkouts...</div>
@@ -290,19 +308,37 @@ export default function AdminDashboard() {
                   <div key={order._id || order.id} className="border border-gray-200 rounded-xl p-5 bg-gray-50 hover:bg-white transition-all shadow-2xs">
                     <div className="flex flex-wrap justify-between items-start gap-4 mb-4 pb-4 border-b border-gray-200">
                       <div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Reference Reference</span>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Reference</span>
                         <span className="font-mono text-sm text-gray-700">{order._id || order.id}</span>
                       </div>
                       <div>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Buyer Profile</span>
-                        <span className="text-sm font-semibold text-gray-800">{order.customerName || 'Guest checkout'}</span>
+                        <span className="text-sm font-semibold text-gray-880">{order.customerName || 'Guest checkout'}</span>
                       </div>
                       <div>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Routing Node</span>
                         <span className="text-sm text-gray-600 font-medium">{order.shippingAddress || 'Digital Product'}</span>
                       </div>
-                      <div>
-                        <span className="badge badge-warning text-gray-800 font-bold px-3 py-2.5 rounded-md">{order.status || 'Pending Verification'}</span>
+                      
+                      {/* Dynamic Order Action Node */}
+                      <div className="flex items-center gap-2">
+                        {order.status === 'Delivered' ? (
+                          <span className="badge badge-success text-white font-bold px-3 py-2.5 rounded-md">
+                            Delivered
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="badge badge-warning text-gray-800 font-bold px-3 py-2.5 rounded-md">
+                              {order.status || 'Processing'}
+                            </span>
+                            <button
+                              onClick={() => handleMarkAsDelivered(order._id || order.id)}
+                              className="btn btn-success btn-xs normal-case font-bold text-white px-3 h-8 shadow-xs rounded-md"
+                            >
+                              Mark Delivered
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -315,7 +351,6 @@ export default function AdminDashboard() {
                             <span className="text-gray-700 font-medium">
                               {item.name} <span className="text-gray-400 font-bold px-1">× {item.quantity || 1}</span>
                             </span>
-                            {/* 3. Safe Defensive Math Calculation block */}
                             <span className="font-bold text-gray-900">
                               ৳{((item.price || 0) * (item.quantity || 1)).toLocaleString()}
                             </span>
