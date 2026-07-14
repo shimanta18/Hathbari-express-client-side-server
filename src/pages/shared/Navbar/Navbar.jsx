@@ -21,7 +21,7 @@ const Navbar = () => {
   
   const dropdownRef = useRef(null);
 
-  // 🔄 Sync Address across tabs and components
+  
   const updateAddressState = useCallback((newAddress) => {
     setDeliveryAddress(newAddress || 'No recent deliveries');
   }, []);
@@ -41,7 +41,7 @@ const Navbar = () => {
     };
   }, [updateAddressState]);
 
-  // 🔐 Auth & Admin Initialization
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -57,7 +57,7 @@ const Navbar = () => {
         .then((data) => setIsAdmin(!!data.admin))
         .catch(() => setIsAdmin(false));
       
-      // Fetch user's latest address
+     
       if (!isAdmin) {
         fetch(`${API_BASE_URL}/api/orders/latest-delivered-address/${user.email}`)
           .then((res) => res.ok ? res.json() : { address: null })
@@ -72,7 +72,7 @@ const Navbar = () => {
     }
   }, [user?.email, isAdmin, updateAddressState]);
 
-  // 🖱️ Dropdown cleanup
+  
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
@@ -88,6 +88,15 @@ const Navbar = () => {
       navigate('/');
     } catch (error) {
       console.error("Logout failed:", error);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault(); // Prevents page reload
+    if (searchQuery.trim()) {
+    
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery(''); 
     }
   };
 
@@ -107,7 +116,7 @@ const Navbar = () => {
         </div>
 
         {/* Search */}
-        <div className="flex-1 max-w-xl relative">
+        <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl relative">
           <div className="absolute inset-y-0 left-4 flex items-center text-[#9CA3AF]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.604 10.604Z" /></svg>
           </div>
@@ -118,7 +127,7 @@ const Navbar = () => {
             placeholder="Search for fresh mangoes, rice, vegetables..."
             className="w-full bg-[#F3F4F6] text-sm pl-11 pr-4 py-2.5 rounded-xl outline-none focus:bg-white focus:border-[#00B058] border transition-all"
           />
-        </div>
+        </form>
 
         {/* User Auth */}
         <div className="flex items-center gap-5 shrink-0">

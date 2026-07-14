@@ -11,8 +11,8 @@ import OrdersPage from "../pages/Features/OrdersPage";
 import ShopPage from "../pages/Features/ShopPage";
 import Home from "../pages/Main home/Home";
 import ProductDetails from "../pages/ProductDetails/ProductDetails";
+import SearchResults from "../pages/SearchResults";
 import TrackOrder from "../pages/trakcer/TrackOrder";
-
 
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
@@ -54,11 +54,9 @@ export const router = createBrowserRouter([
       },
       {
         path: 'orders',
-        
         loader: async () => {
           const response = await fetch(`${API_BASE_URL}/api/orders`);
           if (!response.ok) {
-            
             return []; 
           }
           return response.json();
@@ -74,12 +72,16 @@ export const router = createBrowserRouter([
         Component: CheckoutPage
       },
       {
-        path:'track/:orderId',
+        path: 'track/:orderId',
         Component: TrackOrder
       },
       {
-        path:'admin',
-        Component:AdminDashboard
+        path: 'admin',
+        Component: AdminDashboard
+      },
+      {
+        path: 'search',
+        Component: SearchResults
       }
     ]
   }
