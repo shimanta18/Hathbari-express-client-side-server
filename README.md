@@ -83,7 +83,7 @@ JSON
 }
 
 #. Global State Data Flow
-Plaintext
+```text
 [ User Clicks '+' Button on DealCard ]
                   │
                   ▼
@@ -103,7 +103,7 @@ Plaintext
         ▼                   ▼
 Navbar Re-renders     Toast Notification Triggers
 (Count & Total ৳)     (Auto-dismisses in 2.5s)
-
+```
 # Design System & Style Tokens
 Primary Brand Green: #00B058 (Primary buttons, brand logo, active states)
 
