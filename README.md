@@ -115,3 +115,4 @@ Deep Charcoal: #111827 (Primary headings, dark mode toast container)
 Secondary Gray: #6B7280 / #9CA3AF (Subheaders, line-through pricing, muted borders)
 
 Background Light: #F9FAFB / #F3F4F6 (Card image backgrounds, subtle borders)
+
