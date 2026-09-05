@@ -4,6 +4,7 @@ Target Region: Bangladesh (BDT Currency ৳)
 1. Executive Summary
 HaatBari Express is a single-page full-stack e-commerce web application engineered specifically for fast online grocery shopping and fresh produce delivery. Built on the MERN stack (MongoDB, Express, React, Node.js) with Vite and Tailwind CSS, the platform eliminates traditional e-commerce friction—such as full-page reloads and blocking browser popups—by providing an instant, component-driven single-page experience with real-time state synchronization.
 
+```text
 haatbari-express/
 ├── client/                      # React + Vite Frontend
 │   ├── src/
@@ -26,7 +27,7 @@ haatbari-express/
     ├── models/                  # Mongoose Schemas (Product.js, Order.js)
     ├── routes/                  # Express REST API routes (/api/products)
     └── server.js                # Express application entry point
-
+```
 ***Component Breakdown & Functional Logic***
 Navbar.jsx (Header Navigation)
 Brand Identity: Renders the HaatBari Express logo and quick-navigation links.
